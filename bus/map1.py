@@ -1,5 +1,7 @@
 """
 1. Shape containing multiple parts(polygon) was seperated to the ones containing one part.
+2. Height or width of plot area was adjusted to the map size
+3. Equidistant cylindrical projection
 
 References
 ｢日々適当 Shapefileを読んでみる(Wing it everyday: Reading Shapefile)｣
@@ -26,9 +28,18 @@ def display_shapefile(name, iwidth=500, iheight=500, method=0):
     # scale map units to image units
     hscale = iwidth/mwidth
     vscale = iheight/mheight
-    img = Image.new("RGB", (iwidth, iheight), "white")
+    if hscale < vscale:
+        hscale = vscale
+        iwidth = int(hscale * mwidth)
+    else:
+        vscale = hscale
+        iheight = int(vscale * mheight)
+    hmargin = 50
+    vmargin = 50
+    img = Image.new("RGB", (iwidth+2*hmargin, iheight+2*hmargin), "white")
     draw = ImageDraw.Draw(img)
-
+    # bounding box
+    draw.rectangle(((hmargin,vmargin),(iwidth+hmargin, iheight+vmargin)), outline="grey")
     shapes = r.shapes()
     for i in range(len(shapes)):
         shape = shapes[i]
@@ -44,8 +55,8 @@ def display_shapefile(name, iwidth=500, iheight=500, method=0):
 
             pixels = []
             for j in range(startnum, endnum):
-                x = int(iwidth - ((mright - points[j][0]) * hscale))
-                y = int((mtop - points[j][1]) * vscale)
+                x = int(iwidth - ((mright - points[j][0]) * hscale)) + hmargin
+                y = int((mtop - points[j][1]) * vscale) + vmargin
                 pixels += [(x, y)]
             if shape.shapeType == shapefile.POLYGON:
                 draw.polygon(pixels, outline='black')
